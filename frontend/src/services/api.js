@@ -1,4 +1,6 @@
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 const WS_BASE_URL = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://');
 
 function buildQuery(params) {
@@ -12,9 +14,7 @@ async function jsonFetch(url, options = {}) {
     try {
       const err = await response.json();
       detail = err.detail || err.message || detail;
-    } catch (_e) {
-      // ignore
-    }
+    } catch (_e) {}
     throw new Error(detail);
   }
   return await response.json();
@@ -23,7 +23,7 @@ async function jsonFetch(url, options = {}) {
 class RouteMATEAPI {
   async healthCheck() {
     try {
-      return await jsonFetch('http://localhost:8000/');
+      return await jsonFetch(`${API_ROOT_URL}/`);
     } catch (_error) {
       return { status: 'offline' };
     }
@@ -174,8 +174,6 @@ class RouteMATEAPI {
     };
   }
 
-  // ----- Surge Prediction API -----
-
   async getSurgeSmartAdvice(pickupLat, pickupLng, dropoffLat, dropoffLng) {
     const query = buildQuery({
       pickup_lat: String(pickupLat),
@@ -209,8 +207,6 @@ class RouteMATEAPI {
     return await jsonFetch(`${API_BASE_URL}/surge/current?${query}`);
   }
 
-  // ----- XAI Explainable AI API -----
-
   async getRideExplanation(rideId, userId) {
     const query = userId ? buildQuery({ user_id: userId }) : '';
     return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/explain${query ? '?' + query : ''}`);
@@ -227,4 +223,3 @@ export const getVehicles = (...args) => api.getVehicles(...args);
 export const requestRide = (...args) => api.requestRide(...args);
 export const getSurgeSmartAdvice = (...args) => api.getSurgeSmartAdvice(...args);
 export const getSurgePrediction = (...args) => api.getSurgePrediction(...args);
-
