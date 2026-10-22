@@ -113,9 +113,28 @@ class RouteMATEAPI {
     return await jsonFetch(`${API_BASE_URL}/geo/route?${query}`);
   }
 
-  getRideWebSocketUrl(userId) {
-    return `${WS_BASE_URL.replace('/api', '')}/ws/rides/${userId}`;
+ 
+getRideWebSocketUrl(userId) {
+  const url = new URL(API_BASE_URL);
+
+  if (url.protocol === 'https:') {
+    url.protocol = 'wss:';
+  } else if (url.protocol === 'http:') {
+    url.protocol = 'ws:';
+  } else {
+    throw new Error('Unsupported API URL protocol');
   }
+
+  url.pathname = url.pathname.replace(/\/api\/?$/, '');
+  url.pathname =
+    `${url.pathname.replace(/\/$/, '')}/ws/rides/${encodeURIComponent(userId)}`;
+
+  url.search = '';
+  url.hash = '';
+
+  return url.toString();
+}
+
 
   async getStats() {
     return await jsonFetch(`${API_BASE_URL}/stats`);
