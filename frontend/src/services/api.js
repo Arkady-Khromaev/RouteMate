@@ -9,14 +9,18 @@ function buildQuery(params) {
 
 async function jsonFetch(url, options = {}) {
   const response = await fetch(url, options);
+
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
+
     try {
       const err = await response.json();
       detail = err.detail || err.message || detail;
     } catch (_e) {}
+
     throw new Error(detail);
   }
+
   return await response.json();
 }
 
@@ -34,9 +38,10 @@ class RouteMATEAPI {
   }
 
   async switchPolicy(policy) {
-    return await jsonFetch(`${API_BASE_URL}/policy/switch?policy=${encodeURIComponent(policy)}`, {
-      method: 'POST',
-    });
+    return await jsonFetch(
+      `${API_BASE_URL}/policy/switch?policy=${encodeURIComponent(policy)}`,
+      { method: 'POST' }
+    );
   }
 
   async getVehicles() {
@@ -44,6 +49,7 @@ class RouteMATEAPI {
   }
 
   async requestRide(pickup, dropoff, policy = 'greedy', userContext = null) {
+    // Validate both locations before making the API request.
     const pickupGrid = this.latLngToGrid(pickup);
     const dropoffGrid = this.latLngToGrid(dropoff);
 
@@ -74,11 +80,15 @@ class RouteMATEAPI {
   }
 
   async reverseGeocode(lat, lng) {
-    return await jsonFetch(`${API_BASE_URL}/geo/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+    return await jsonFetch(
+      `${API_BASE_URL}/geo/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+    );
   }
 
   async getUserRouteSuggestion(userId) {
-    return await jsonFetch(`${API_BASE_URL}/users/${encodeURIComponent(userId)}/route-suggestion`);
+    return await jsonFetch(
+      `${API_BASE_URL}/users/${encodeURIComponent(userId)}/route-suggestion`
+    );
   }
 
   async getRideState(rideId) {
@@ -87,19 +97,26 @@ class RouteMATEAPI {
 
   async getRideComparison(rideId, userId) {
     const query = buildQuery({ user_id: userId });
-    return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/comparison?${query}`);
+
+    return await jsonFetch(
+      `${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/comparison?${query}`
+    );
   }
 
   async cancelRide(rideId, userId) {
-    return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/cancel`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId }),
-    });
+    return await jsonFetch(
+      `${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/cancel`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      }
+    );
   }
 
   async geocodeAddress(address) {
     const query = buildQuery({ address });
+
     return await jsonFetch(`${API_BASE_URL}/geo/geocode?${query}`);
   }
 
@@ -110,6 +127,7 @@ class RouteMATEAPI {
       dropoff_lat: String(dropoff.lat),
       dropoff_lng: String(dropoff.lng),
     });
+
     return await jsonFetch(`${API_BASE_URL}/geo/route?${query}`);
   }
 
@@ -122,7 +140,9 @@ class RouteMATEAPI {
   }
 
   async reloadMLModel() {
-    return await jsonFetch(`${API_BASE_URL}/model/reload`, { method: 'POST' });
+    return await jsonFetch(`${API_BASE_URL}/model/reload`, {
+      method: 'POST',
+    });
   }
 
   async runSimulation(params = {}) {
@@ -147,10 +167,57 @@ class RouteMATEAPI {
     });
   }
 
+  // Validate geographic coordinates before converting them to grid cells.
   latLngToGrid(coords) {
-    const x = Math.floor(((coords.lng - 72.77) / (73.0 - 72.77)) * 10);
-    const y = Math.floor(((coords.lat - 18.89) / (19.27 - 18.89)) * 10);
-    return { x: Math.max(0, Math.min(9, x)), y: Math.max(0, Math.min(9, y)) };
+    const { lat, lng } = coords || {};
+
+    if (
+      typeof lat !== 'number' ||
+      typeof lng !== 'number' ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      throw new Error(
+        'Invalid coordinates. Please provide a valid numeric latitude and longitude.'
+      );
+    }
+
+    const MIN_LAT = 18.89;
+    const MAX_LAT = 19.27;
+    const MIN_LNG = 72.77;
+    const MAX_LNG = 73.0;
+    const GRID_SIZE = 10;
+
+    if (
+      lat < MIN_LAT ||
+      lat > MAX_LAT ||
+      lng < MIN_LNG ||
+      lng > MAX_LNG
+    ) {
+      throw new Error(
+        `Location is outside the supported service area. ` +
+        `Choose a location within latitude ${MIN_LAT}–${MAX_LAT} ` +
+        `and longitude ${MIN_LNG}–${MAX_LNG}.`
+      );
+    }
+
+    // Preserve correct conversion for valid coordinates.
+    // The maximum boundary maps to cell 9, not cell 10.
+    const x = Math.min(
+      GRID_SIZE - 1,
+      Math.floor(
+        ((lng - MIN_LNG) / (MAX_LNG - MIN_LNG)) * GRID_SIZE
+      )
+    );
+
+    const y = Math.min(
+      GRID_SIZE - 1,
+      Math.floor(
+        ((lat - MIN_LAT) / (MAX_LAT - MIN_LAT)) * GRID_SIZE
+      )
+    );
+
+    return { x, y };
   }
 
   gridToLatLng(x, y) {
@@ -164,6 +231,7 @@ class RouteMATEAPI {
     const x = vehicle.location?.x ?? 0;
     const y = vehicle.location?.y ?? 0;
     const pos = this.gridToLatLng(x, y);
+
     return {
       id: vehicle.vehicle_id,
       position: [pos.lat, pos.lng],
@@ -181,6 +249,7 @@ class RouteMATEAPI {
       dropoff_lat: String(dropoffLat),
       dropoff_lng: String(dropoffLng),
     });
+
     return await jsonFetch(`${API_BASE_URL}/surge/smart-advice?${query}`);
   }
 
@@ -190,6 +259,7 @@ class RouteMATEAPI {
       lng: String(lng),
       horizon_min: String(horizonMin),
     });
+
     return await jsonFetch(`${API_BASE_URL}/surge/predict?${query}`);
   }
 
@@ -199,21 +269,30 @@ class RouteMATEAPI {
       lng: String(lng),
       radius_cells: String(radiusCells),
     });
+
     return await jsonFetch(`${API_BASE_URL}/surge/heatmap?${query}`);
   }
 
   async getCurrentSurge(lat, lng) {
-    const query = buildQuery({ lat: String(lat), lng: String(lng) });
+    const query = buildQuery({
+      lat: String(lat),
+      lng: String(lng),
+    });
+
     return await jsonFetch(`${API_BASE_URL}/surge/current?${query}`);
   }
 
   async getRideExplanation(rideId, userId) {
     const query = userId ? buildQuery({ user_id: userId }) : '';
-    return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/explain${query ? '?' + query : ''}`);
+
+    return await jsonFetch(
+      `${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/explain${query ? '?' + query : ''}`
+    );
   }
 }
 
 const api = new RouteMATEAPI();
+
 export default api;
 
 export const runSimulation = (...args) => api.runSimulation(...args);
