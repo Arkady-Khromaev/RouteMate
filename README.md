@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-blue?logo=python" />
+  <img src="https://img.shields.io/badge/React-Frontend-61DAFB?logo=react" />
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
+  <img src="https://img.shields.io/badge/Contributions-Welcome-brightgreen" />
+</p> 
+
 # RouteMate
 
 ML-based ride-sharing optimization system using reinforcement learning and vehicle pooling, with a FastAPI backend and React frontend.
