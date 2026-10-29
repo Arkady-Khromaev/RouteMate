@@ -151,9 +151,37 @@ outputs/       Models, logs, and evaluation results
 - Live map integration
 - Advanced analytics dashboard
 
+  
 ---
 
-## Contributors
-- Makarand Karanjkar
-- Adithya Madivala
+## 📸 Screenshots
+
+### Application Interface
+
+![RouteMate Screenshot 1](96202.jpg)
+
+![RouteMate Screenshot 2](96213.jpg)
+
+![RouteMate Screenshot 3](96209.jpg)
+
+### Route Optimization
+
+![RouteMate Screenshot 4](96217.jpg)
+
+![RouteMate Screenshot 5](96215.jpg)
+
+### Model Performance
+
+![RouteMate Screenshot 6](96211.jpg)
+
+---
+
+## 🎥 Demo Video
+
+Watch RouteMate in action:
+
+[▶️ Watch the RouteMate Demo](96204 (1).mp4
+
+
+
 
