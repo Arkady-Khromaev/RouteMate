@@ -166,7 +166,6 @@ outputs/       Models, logs, and evaluation results
 
 ### Route Optimization
 
-![RouteMate Screenshot 4](96217.jpg)
 
 ![RouteMate Screenshot 5](96215.jpg)
 
